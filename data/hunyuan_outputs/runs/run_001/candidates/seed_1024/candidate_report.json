@@ -1,0 +1,81 @@
+{
+  "candidate": "seed_1024",
+  "seed": 1024,
+  "model_id": "tencent/Hunyuan3D-2.1",
+  "model_subfolder": "hunyuan3d-dit-v2-1",
+  "source_commit": "82920d643c0dc2f7bfd7255f45f62d386edfe60c",
+  "input_image": "/workspace/data/scenes/global/reference/pogo_complete.png",
+  "input_sha256": "80fe6857f96eb09f0ee51bd88b4dd9544b6e97a6adde042134dafd7c66794f23",
+  "prepared_condition": "/workspace/data/hunyuan_outputs/runs/run_001/prepared_condition.png",
+  "settings": {
+    "num_inference_steps": 50,
+    "guidance_scale": 5.0,
+    "octree_resolution": 384,
+    "low_vram_mode": false
+  },
+  "runtime_seconds": 136.5039255390002,
+  "peak_cuda_memory_gib": 7.630465984344482,
+  "raw_mesh": {
+    "vertices": 257720,
+    "faces": 515440,
+    "components": 5,
+    "watertight": false,
+    "winding_consistent": true,
+    "euler_number": 5,
+    "bounds": [
+      [
+        -0.9992510080337524,
+        -0.5994991064071655,
+        -0.46650445461273193
+      ],
+      [
+        0.9918727278709412,
+        0.5946930646896362,
+        0.45357659459114075
+      ]
+    ],
+    "extents_model_units": [
+      1.9911237359046936,
+      1.1941921710968018,
+      0.9200810492038727
+    ],
+    "volume_model_units_cubed": null
+  },
+  "alignment_ready_mesh": {
+    "vertices": 257720,
+    "faces": 515436,
+    "components": 1,
+    "watertight": true,
+    "winding_consistent": true,
+    "euler_number": 2,
+    "bounds": [
+      [
+        -0.9992510080337524,
+        -0.5994991064071655,
+        -0.46650445461273193
+      ],
+      [
+        0.9918727278709412,
+        0.5946930646896362,
+        0.45357659459114075
+      ]
+    ],
+    "extents_model_units": [
+      1.9911237359046936,
+      1.1941921710968018,
+      0.9200810492038727
+    ],
+    "volume_model_units_cubed": 0.4590993181088736
+  },
+  "coordinate_status": {
+    "units": "Hunyuan normalized model units; not millimetres",
+    "pose": "Hunyuan canonical pose; not registered to VGGT",
+    "authority": "inferred intact-shape hypothesis"
+  },
+  "paths": {
+    "raw_glb": "/workspace/data/hunyuan_outputs/runs/run_001/candidates/seed_1024/intact_prior_raw.glb",
+    "alignment_glb": "/workspace/data/hunyuan_outputs/runs/run_001/candidates/seed_1024/intact_prior_alignment_ready.glb",
+    "alignment_ply": "/workspace/data/hunyuan_outputs/runs/run_001/candidates/seed_1024/intact_prior_alignment_ready.ply",
+    "preview_html": "/workspace/data/hunyuan_outputs/runs/run_001/candidates/seed_1024/intact_prior_preview.html"
+  }
+}

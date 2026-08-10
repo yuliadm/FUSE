@@ -1,0 +1,6 @@
+# Notebook and interactive-preview dependencies. Kept separate from the model
+# runtime so a failure is reported as the notebook stage.
+jupyterlab==4.2.5
+ipykernel==6.29.5
+ipywidgets==8.1.5
+plotly==5.24.1

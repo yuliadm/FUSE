@@ -1,0 +1,5 @@
+{
+  "vggt_cloud": "/workspace/data/vggt_outputs/global/broken_clean_normals.ply",
+  "hunyuan_manifest": "/workspace/data/hunyuan_outputs/runs/run_001/selected/prior_manifest.json",
+  "hunyuan_prior": "/workspace/data/hunyuan_outputs/runs/run_001/selected/intact_prior.glb"
+}

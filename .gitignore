@@ -1,0 +1,117 @@
+# ============================================================
+# FUSE .gitignore
+# ============================================================
+
+# ----------------------------
+# Python
+# ----------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+.venv/
+venv/
+env/
+
+# ----------------------------
+# Jupyter
+# ----------------------------
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# ----------------------------
+# VS Code / IDE
+# ----------------------------
+.vscode/
+.idea/
+
+# ----------------------------
+# OS junk
+# ----------------------------
+.DS_Store
+Thumbs.db
+
+# ----------------------------
+# Secrets / local environment
+# ----------------------------
+.env
+.env.*
+*.pem
+*.key
+
+# ============================================================
+# MODEL / APPLICATION CACHES
+# ============================================================
+
+# Hugging Face / rembg / downloaded models
+data/cache/
+containers/*/cache/
+
+**/.cache/huggingface/
+**/cache/huggingface/
+
+# Generic ML cache directories
+**/.cache/
+__pycache__/
+
+# ============================================================
+# LARGE MODEL FILES
+# ============================================================
+
+*.safetensors
+*.ckpt
+*.pth
+*.onnx
+
+# Be slightly more careful with .pt:
+# uncomment if all .pt files are generated/downloaded weights
+# *.pt
+
+# ============================================================
+# RAW VIDEO
+# ============================================================
+
+# Raw/generated videos can be regenerated and are large
+data/scenes/**/raw_video/*.mp4
+data/scenes/**/raw_video/*.mov
+data/scenes/**/raw_video/*.avi
+data/scenes/**/raw_video/*.mkv
+
+# ============================================================
+# GENERATED 3D / NUMERICAL DATA
+# ============================================================
+
+*.ply
+*.stl
+*.glb
+*.gltf
+
+*.npy
+*.npz
+
+# Optional large tensor/data artifacts
+*.bin
+
+# ============================================================
+# TEMP / LOG FILES
+# ============================================================
+
+*.log
+*.tmp
+*.temp
+
+tmp/
+temp/
+
+# ============================================================
+# IMPORTANT:
+# HTML PREVIEWS ARE INTENTIONALLY KEPT IN GIT
+# ============================================================
+
+# Do NOT ignore *.html
+# Files such as:
+#   data/vggt_outputs/.../*.html
+#   data/hunyuan_outputs/.../*.html
+# remain trackable.

@@ -1,0 +1,38 @@
+{
+  "images": [
+    "/workspace/data/scenes/global/foreground_rgb/foreground_000.png",
+    "/workspace/data/scenes/global/foreground_rgb/foreground_003.png",
+    "/workspace/data/scenes/global/foreground_rgb/foreground_007.png",
+    "/workspace/data/scenes/global/foreground_rgb/foreground_011.png",
+    "/workspace/data/scenes/global/foreground_rgb/foreground_015.png",
+    "/workspace/data/scenes/global/foreground_rgb/foreground_018.png",
+    "/workspace/data/scenes/global/foreground_rgb/foreground_022.png",
+    "/workspace/data/scenes/global/foreground_rgb/foreground_026.png",
+    "/workspace/data/scenes/global/foreground_rgb/foreground_030.png",
+    "/workspace/data/scenes/global/foreground_rgb/foreground_033.png",
+    "/workspace/data/scenes/global/foreground_rgb/foreground_037.png",
+    "/workspace/data/scenes/global/foreground_rgb/foreground_041.png",
+    "/workspace/data/scenes/global/foreground_rgb/foreground_045.png",
+    "/workspace/data/scenes/global/foreground_rgb/foreground_048.png",
+    "/workspace/data/scenes/global/foreground_rgb/foreground_052.png",
+    "/workspace/data/scenes/global/foreground_rgb/foreground_056.png"
+  ],
+  "masks": [
+    "/workspace/data/scenes/global/foreground_masks/mask_000.png",
+    "/workspace/data/scenes/global/foreground_masks/mask_003.png",
+    "/workspace/data/scenes/global/foreground_masks/mask_007.png",
+    "/workspace/data/scenes/global/foreground_masks/mask_011.png",
+    "/workspace/data/scenes/global/foreground_masks/mask_015.png",
+    "/workspace/data/scenes/global/foreground_masks/mask_018.png",
+    "/workspace/data/scenes/global/foreground_masks/mask_022.png",
+    "/workspace/data/scenes/global/foreground_masks/mask_026.png",
+    "/workspace/data/scenes/global/foreground_masks/mask_030.png",
+    "/workspace/data/scenes/global/foreground_masks/mask_033.png",
+    "/workspace/data/scenes/global/foreground_masks/mask_037.png",
+    "/workspace/data/scenes/global/foreground_masks/mask_041.png",
+    "/workspace/data/scenes/global/foreground_masks/mask_045.png",
+    "/workspace/data/scenes/global/foreground_masks/mask_048.png",
+    "/workspace/data/scenes/global/foreground_masks/mask_052.png",
+    "/workspace/data/scenes/global/foreground_masks/mask_056.png"
+  ]
+}

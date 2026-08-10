@@ -1,0 +1,117 @@
+{
+  "scene": "global",
+  "paths": {
+    "raw_video": "/workspace/data/scenes/global/raw_video/video.mp4",
+    "raw_image_dir": "/workspace/data/scenes/global/raw_images",
+    "rembg_image_dir": "/workspace/data/scenes/global/rembg_images",
+    "raw_vggt_cloud": "/workspace/data/vggt_outputs/global/raw_vggt_cloud.ply",
+    "clean_cloud": "/workspace/data/cleaned_geometry/global/broken_clean.ply",
+    "clean_normals_cloud": "/workspace/data/cleaned_geometry/global/broken_clean_normals.ply",
+    "preview_downsampled": "/workspace/data/cleaned_geometry/global/preview_downsampled.ply",
+    "mesh": null,
+    "visualization_raw": "/workspace/data/visualizations/global/raw_vggt_cloud.html",
+    "visualization_clean": "/workspace/data/visualizations/global/broken_clean.html",
+    "visualization_cleanup_overlay": "/workspace/data/visualizations/global/clean_with_removed_points.html"
+  },
+  "settings": {
+    "checkpoint": "facebook/VGGT-1B",
+    "use_rembg": true,
+    "max_video_frames": 30,
+    "frame_step": 2,
+    "max_vggt_frames": 12,
+    "bad_frame_indices": [],
+    "conf_quantile": 0.1,
+    "max_points": 300000,
+    "voxel_size": 0.0022039989231093303,
+    "make_mesh": false,
+    "poisson_depth": 8
+  },
+  "inputs": {
+    "n_raw_frames": 30,
+    "n_processed_frames": 30,
+    "n_vggt_frames": 15,
+    "vggt_image_paths": [
+      "/workspace/data/scenes/global/rembg_images/rembg_000.png",
+      "/workspace/data/scenes/global/rembg_images/rembg_002.png",
+      "/workspace/data/scenes/global/rembg_images/rembg_004.png",
+      "/workspace/data/scenes/global/rembg_images/rembg_006.png",
+      "/workspace/data/scenes/global/rembg_images/rembg_008.png",
+      "/workspace/data/scenes/global/rembg_images/rembg_010.png",
+      "/workspace/data/scenes/global/rembg_images/rembg_012.png",
+      "/workspace/data/scenes/global/rembg_images/rembg_014.png",
+      "/workspace/data/scenes/global/rembg_images/rembg_016.png",
+      "/workspace/data/scenes/global/rembg_images/rembg_018.png",
+      "/workspace/data/scenes/global/rembg_images/rembg_020.png",
+      "/workspace/data/scenes/global/rembg_images/rembg_022.png",
+      "/workspace/data/scenes/global/rembg_images/rembg_024.png",
+      "/workspace/data/scenes/global/rembg_images/rembg_026.png",
+      "/workspace/data/scenes/global/rembg_images/rembg_028.png"
+    ]
+  },
+  "raw_cloud": {
+    "n_points": 94928,
+    "bbox_min": [
+      -0.3146369159221649,
+      -0.2550372779369354,
+      0.7015516757965088
+    ],
+    "bbox_max": [
+      0.5058501362800598,
+      0.41440635919570923,
+      1.4936288595199585
+    ],
+    "extent": [
+      0.8204870522022247,
+      0.6694436371326447,
+      0.7920771837234497
+    ],
+    "diagonal": 1.3223993538655983
+  },
+  "clean_cloud": {
+    "n_downsampled": 76273,
+    "n_clean": 75457,
+    "bbox_min": [
+      -0.3146369159221649,
+      -0.2550372779369354,
+      0.7017964422702789
+    ],
+    "bbox_max": [
+      0.4883265495300293,
+      0.41440635919570923,
+      1.4578734636306763
+    ],
+    "extent": [
+      0.8029634654521942,
+      0.6694436371326447,
+      0.7560770213603973
+    ],
+    "diagonal": 1.2901773414448077,
+    "centroid": [
+      -0.008723550928815554,
+      -0.0075919448071253715,
+      1.0328780211182118
+    ],
+    "nn_stats": {
+      "min": 0.00021559053211555866,
+      "p05": 0.0015706311524574992,
+      "median": 0.0027342761569424793,
+      "mean": 0.0032885864371740687,
+      "p95": 0.006862567437459996,
+      "max": 0.17625755100943927,
+      "std": 0.0020356021524074413
+    },
+    "removed_by_cleanup": 816,
+    "removed_ratio_from_downsampled": 0.010698412282196845
+  },
+  "density_proxy": {
+    "sixth_neighbor_distance_min": 0.0019925306965441346,
+    "sixth_neighbor_distance_median": 0.004116751713389573,
+    "sixth_neighbor_distance_max": 0.020277585964475188
+  },
+  "units": {
+    "units": "vggt_relative",
+    "metric_scale_applied": false,
+    "extrinsic_convention": "OpenCV world-to-camera"
+  },
+  "mesh": null
+}

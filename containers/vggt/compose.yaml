@@ -1,0 +1,70 @@
+services:
+  vggt:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USER_ID: "${HOST_UID:-1000}"
+        GROUP_ID: "${HOST_GID:-1000}"
+
+    image: fuse-vggt:cu124
+    container_name: fuse-vggt
+
+    # The runtime identity must match the identity created during the build.
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+
+    gpus: all
+    shm_size: "8gb"
+    init: true
+
+    ports:
+      - "127.0.0.1:${VGGT_PORT:-8890}:8890"
+
+    volumes:
+      # compose.yaml is expected at FUSE/containers/vggt/compose.yaml.
+      # These host directories must exist before the container starts.
+      - type: bind
+        source: "${FUSE_NOTEBOOKS_DIR:-../../notebooks}"
+        target: /workspace/notebooks
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: "${FUSE_DATA_DIR:-../../data}"
+        target: /workspace/data
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: "${FUSE_VGGT_CACHE_DIR:-./cache}"
+        target: /workspace/.cache
+        bind:
+          create_host_path: false
+
+    environment:
+      HOME: /home/fuse
+      XDG_CACHE_HOME: /workspace/.cache/xdg
+      HF_HOME: /workspace/.cache/huggingface
+      TORCH_HOME: /workspace/.cache/torch
+      U2NET_HOME: /workspace/.cache/rembg
+      PYTHONPATH: /opt/vggt:/workspace
+      PYTHONUNBUFFERED: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTORCH_CUDA_ALLOC_CONF: "expandable_segments:True"
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+
+    working_dir: /workspace
+
+    command:
+      - /opt/venv/bin/jupyter
+      - lab
+      - --ip=0.0.0.0
+      - --port=8890
+      - --no-browser
+      - --IdentityProvider.token=
+      - --ServerApp.password=
+      - --LabApp.extension_manager=readonly
+
+    restart: unless-stopped
+

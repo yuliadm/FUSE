@@ -1,0 +1,81 @@
+{
+  "candidate": "seed_144",
+  "seed": 144,
+  "model_id": "tencent/Hunyuan3D-2.1",
+  "model_subfolder": "hunyuan3d-dit-v2-1",
+  "source_commit": "82920d643c0dc2f7bfd7255f45f62d386edfe60c",
+  "input_image": "/workspace/data/scenes/global/reference/pogo_complete.png",
+  "input_sha256": "80fe6857f96eb09f0ee51bd88b4dd9544b6e97a6adde042134dafd7c66794f23",
+  "prepared_condition": "/workspace/data/hunyuan_outputs/runs/run_001/prepared_condition.png",
+  "settings": {
+    "num_inference_steps": 50,
+    "guidance_scale": 5.0,
+    "octree_resolution": 384,
+    "low_vram_mode": false
+  },
+  "runtime_seconds": 135.54196023999248,
+  "peak_cuda_memory_gib": 7.630465984344482,
+  "raw_mesh": {
+    "vertices": 230787,
+    "faces": 461572,
+    "components": 2,
+    "watertight": false,
+    "winding_consistent": true,
+    "euler_number": 3,
+    "bounds": [
+      [
+        -0.9941714406013489,
+        -0.6055260300636292,
+        -0.3598944842815399
+      ],
+      [
+        0.993836522102356,
+        0.5978312492370605,
+        0.3551577031612396
+      ]
+    ],
+    "extents_model_units": [
+      1.9880079627037048,
+      1.2033572793006897,
+      0.7150521874427795
+    ],
+    "volume_model_units_cubed": null
+  },
+  "alignment_ready_mesh": {
+    "vertices": 230787,
+    "faces": 461570,
+    "components": 1,
+    "watertight": true,
+    "winding_consistent": true,
+    "euler_number": 2,
+    "bounds": [
+      [
+        -0.9941714406013489,
+        -0.6055260300636292,
+        -0.3598944842815399
+      ],
+      [
+        0.993836522102356,
+        0.5978312492370605,
+        0.3551577031612396
+      ]
+    ],
+    "extents_model_units": [
+      1.9880079627037048,
+      1.2033572793006897,
+      0.7150521874427795
+    ],
+    "volume_model_units_cubed": 0.4064175565523185
+  },
+  "coordinate_status": {
+    "units": "Hunyuan normalized model units; not millimetres",
+    "pose": "Hunyuan canonical pose; not registered to VGGT",
+    "authority": "inferred intact-shape hypothesis"
+  },
+  "paths": {
+    "raw_glb": "/workspace/data/hunyuan_outputs/runs/run_001/candidates/seed_144/intact_prior_raw.glb",
+    "alignment_glb": "/workspace/data/hunyuan_outputs/runs/run_001/candidates/seed_144/intact_prior_alignment_ready.glb",
+    "alignment_ply": "/workspace/data/hunyuan_outputs/runs/run_001/candidates/seed_144/intact_prior_alignment_ready.ply",
+    "preview_html": "/workspace/data/hunyuan_outputs/runs/run_001/candidates/seed_144/intact_prior_preview.html"
+  }
+}

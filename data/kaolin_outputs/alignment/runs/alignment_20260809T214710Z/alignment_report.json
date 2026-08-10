@@ -1,0 +1,332 @@
+{
+  "stage": "alignment_and_missing_piece_hypothesis",
+  "run_name": "alignment_20260809T214710Z",
+  "created_utc": "2026-08-09T21:48:10.738693+00:00",
+  "authority_rule": "VGGT measured geometry is fixed; only the intact prior moves/deforms.",
+  "inputs": {
+    "vggt_cloud": "/workspace/data/vggt_outputs/global/broken_clean_normals.ply",
+    "vggt_sha256": "a8d2a5c2e460a696e82f2fce558f10fcb16a14de871436b9ad8d24058c841f58",
+    "hunyuan_prior": "/workspace/data/hunyuan_outputs/runs/run_001/selected/intact_prior.glb",
+    "hunyuan_sha256": "1cfac1107ac43c7be4e9d9bba0d74ab840bd4ad71b472c434d8c37ff223c408c",
+    "hunyuan_manifest": "/workspace/data/hunyuan_outputs/runs/run_001/selected/prior_manifest.json"
+  },
+  "compatibility": {
+    "vggt_contract": "cleaned point cloud PLY; normals preferred and estimated if absent",
+    "hunyuan_contract": "selected intact prior GLB plus optional prior_manifest.json",
+    "units": "VGGT coordinate units; not assumed to be millimetres"
+  },
+  "coarse_initialization": "automatic_pca_24_hypotheses",
+  "manual_landmark_pairs": 0,
+  "sim3": {
+    "parameterization": "Sim(3): uniform scale, SO(3), translation",
+    "scale": 0.19296346604824066,
+    "rotation": [
+      [
+        0.971278965473175,
+        0.02435556799173355,
+        0.23669375479221344
+      ],
+      [
+        -0.08780413866043091,
+        -0.8878558874130249,
+        0.4516661465167999
+      ],
+      [
+        0.22115053236484528,
+        -0.459476500749588,
+        -0.8602172136306763
+      ]
+    ],
+    "translation": [
+      0.008967067115008831,
+      -0.021944798529148102,
+      0.982920229434967
+    ],
+    "matrix": [
+      [
+        0.18742135167121887,
+        0.0046997349709272385,
+        0.045673247426748276,
+        0.008967067115008831
+      ],
+      [
+        -0.016942990943789482,
+        -0.1713237464427948,
+        0.0871550664305687,
+        -0.021944798529148102
+      ],
+      [
+        0.04267397150397301,
+        -0.08866217732429504,
+        -0.16599050164222717,
+        0.982920229434967
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "history": [
+      {
+        "step": 0,
+        "loss": 0.036955542862415314,
+        "surface": 0.006274993997067213,
+        "reverse": 0.014119111932814121,
+        "normal": 0.2856268286705017,
+        "landmark": 0.0,
+        "scale": 0.16295607388019562
+      },
+      {
+        "step": 25,
+        "loss": 0.03729084134101868,
+        "surface": 0.0059854937717318535,
+        "reverse": 0.011913948692381382,
+        "normal": 0.29498109221458435,
+        "landmark": 0.0,
+        "scale": 0.1685219407081604
+      },
+      {
+        "step": 50,
+        "loss": 0.03209139034152031,
+        "surface": 0.005570473149418831,
+        "reverse": 0.009870504029095173,
+        "normal": 0.2494252622127533,
+        "landmark": 0.0,
+        "scale": 0.177328959107399
+      },
+      {
+        "step": 75,
+        "loss": 0.02834061160683632,
+        "surface": 0.005160658620297909,
+        "reverse": 0.008274522610008717,
+        "normal": 0.21705953776836395,
+        "landmark": 0.0,
+        "scale": 0.1870141476392746
+      },
+      {
+        "step": 100,
+        "loss": 0.02756432071328163,
+        "surface": 0.004926228430122137,
+        "reverse": 0.007692254148423672,
+        "normal": 0.21161802113056183,
+        "landmark": 0.0,
+        "scale": 0.19231556355953217
+      },
+      {
+        "step": 125,
+        "loss": 0.027559852227568626,
+        "surface": 0.004921925254166126,
+        "reverse": 0.00761664193123579,
+        "normal": 0.21169331669807434,
+        "landmark": 0.0,
+        "scale": 0.1930445432662964
+      },
+      {
+        "step": 150,
+        "loss": 0.027662571519613266,
+        "surface": 0.004914597142487764,
+        "reverse": 0.007636645808815956,
+        "normal": 0.21276089549064636,
+        "landmark": 0.0,
+        "scale": 0.19295935332775116
+      },
+      {
+        "step": 175,
+        "loss": 0.027610965073108673,
+        "surface": 0.004915162455290556,
+        "reverse": 0.007631320506334305,
+        "normal": 0.21225237846374512,
+        "landmark": 0.0,
+        "scale": 0.19293594360351562
+      },
+      {
+        "step": 200,
+        "loss": 0.02763517014682293,
+        "surface": 0.00491934921592474,
+        "reverse": 0.007631794083863497,
+        "normal": 0.2124515324831009,
+        "landmark": 0.0,
+        "scale": 0.1929416060447693
+      },
+      {
+        "step": 225,
+        "loss": 0.027705010026693344,
+        "surface": 0.004916137084364891,
+        "reverse": 0.007628569379448891,
+        "normal": 0.2131807804107666,
+        "landmark": 0.0,
+        "scale": 0.19297859072685242
+      },
+      {
+        "step": 250,
+        "loss": 0.027704477310180664,
+        "surface": 0.004915979690849781,
+        "reverse": 0.007633623667061329,
+        "normal": 0.21317242085933685,
+        "landmark": 0.0,
+        "scale": 0.19294477999210358
+      },
+      {
+        "step": 275,
+        "loss": 0.027536746114492416,
+        "surface": 0.0049178581684827805,
+        "reverse": 0.007638911716639996,
+        "normal": 0.21148015558719635,
+        "landmark": 0.0,
+        "scale": 0.1928970366716385
+      },
+      {
+        "step": 300,
+        "loss": 0.02756928838789463,
+        "surface": 0.004923017229884863,
+        "reverse": 0.00763530470430851,
+        "normal": 0.21174773573875427,
+        "landmark": 0.0,
+        "scale": 0.19295969605445862
+      },
+      {
+        "step": 325,
+        "loss": 0.027738574892282486,
+        "surface": 0.004919172264635563,
+        "reverse": 0.007632528431713581,
+        "normal": 0.2134968489408493,
+        "landmark": 0.0,
+        "scale": 0.1928841471672058
+      },
+      {
+        "step": 349,
+        "loss": 0.027646413072943687,
+        "surface": 0.004918775521218777,
+        "reverse": 0.007631219923496246,
+        "normal": 0.2125687152147293,
+        "landmark": 0.0,
+        "scale": 0.19296346604824066
+      }
+    ]
+  },
+  "generic_deformation_enabled": true,
+  "support": {
+    "measured_spacing": 0.0009121738707416198,
+    "support_distance": 0.004327526404404279,
+    "counts": {
+      "supported": 177463,
+      "uncertain": 56309,
+      "unsupported": 23948
+    },
+    "fractions": {
+      "supported": 0.6885883905013193,
+      "uncertain": 0.2184890578922862,
+      "unsupported": 0.09292255160639454
+    }
+  },
+  "alignment_residuals": {
+    "all_q50": 0.0012349992983673476,
+    "all_q90": 0.01218226822791405,
+    "trimmed_mean": 0.0010009713847063994,
+    "trimmed_rmse": 0.0011264626039611434,
+    "trimmed_mean_rel_diagonal": 0.0018504268557440573
+  },
+  "candidate_components": [
+    {
+      "component_id": 0,
+      "faces": 23470,
+      "vertices": 12216,
+      "area": 0.012687083918251355,
+      "centroid": [
+        -0.04022787948161951,
+        0.06529269405684318,
+        1.0444200817367075
+      ],
+      "median_support_distance": 0.01961010842578719,
+      "max_support_distance": 0.0445339672381937
+    },
+    {
+      "component_id": 1,
+      "faces": 12416,
+      "vertices": 6595,
+      "area": 0.005641851010101085,
+      "centroid": [
+        -0.07012466546353453,
+        -0.038081329681066506,
+        0.9556206987756778
+      ],
+      "median_support_distance": 0.015654428054852187,
+      "max_support_distance": 0.03043628137184775
+    },
+    {
+      "component_id": 2,
+      "faces": 7552,
+      "vertices": 4092,
+      "area": 0.003118296096502727,
+      "centroid": [
+        0.1196551044862559,
+        0.034446069208733145,
+        1.1072400754333298
+      ],
+      "median_support_distance": 0.01396262732163096,
+      "max_support_distance": 0.026898843810920763
+    },
+    {
+      "component_id": 3,
+      "faces": 3168,
+      "vertices": 1650,
+      "area": 0.0010545251131210706,
+      "centroid": [
+        0.18280917628544058,
+        -0.09191991396673792,
+        1.0525256994097694
+      ],
+      "median_support_distance": 0.016092615372143557,
+      "max_support_distance": 0.023241796453515113
+    },
+    {
+      "component_id": 4,
+      "faces": 1206,
+      "vertices": 722,
+      "area": 0.0005851726934018085,
+      "centroid": [
+        0.1039365650745896,
+        -0.009120898459998394,
+        1.0700977947480812
+      ],
+      "median_support_distance": 0.01182091672728929,
+      "max_support_distance": 0.016518359131499953
+    },
+    {
+      "component_id": 5,
+      "faces": 64,
+      "vertices": 47,
+      "area": 2.2281940937632557e-05,
+      "centroid": [
+        0.13207497737304416,
+        -0.04934925289342815,
+        1.0730352374910404
+      ],
+      "median_support_distance": 0.011238276184203358,
+      "max_support_distance": 0.011920208817678553
+    }
+  ],
+  "selected_missing_components": [],
+  "absence_confirmed": false,
+  "attachment_mode": "exterior_patch",
+  "missing_piece": null,
+  "warnings": [
+    "Automatic PCA initialization was used. Symmetric or articulated objects should be checked with manual landmarks."
+  ],
+  "outputs": {
+    "coarse_prior": "/workspace/data/kaolin_outputs/alignment/runs/alignment_20260809T214710Z/prior_coarse_sim3.glb",
+    "rigid_prior": "/workspace/data/kaolin_outputs/alignment/runs/alignment_20260809T214710Z/prior_kaolin_aligned.glb",
+    "adapted_prior": "/workspace/data/kaolin_outputs/alignment/runs/alignment_20260809T214710Z/prior_adapted.glb",
+    "support_classification": "/workspace/data/kaolin_outputs/alignment/runs/alignment_20260809T214710Z/prior_support_classification.ply",
+    "candidate_preview": "/workspace/data/kaolin_outputs/alignment/runs/alignment_20260809T214710Z/05_missing_candidates.html",
+    "missing_piece": null,
+    "completed_overlay": null
+  },
+  "next_stage_contract": {
+    "measured_geometry": "unchanged VGGT cloud",
+    "exterior_hypothesis": "missing_piece_hypothesis.glb when absence_confirmed",
+    "manufacturing_gate": "register fracture close-up and build a complementary mating surface"
+  }
+}

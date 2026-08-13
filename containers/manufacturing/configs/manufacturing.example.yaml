@@ -1,0 +1,51 @@
+# Copy this file to data/05_manufacturing/manufacturing.yaml and edit it.
+
+input:
+  # "latest" selects the newest data/04_verification/runs/handoff_* directory.
+  handoff_run: latest
+  # Leave null to auto-discover fragment_exterior_hypothesis.{glb,obj,ply,stl}.
+  fragment_mesh: null
+  # Optional reference for clearance/proximity checks. A watertight mesh is best.
+  broken_object_mesh: null
+
+units:
+  # VGGT coordinates have arbitrary scale. Manufacturing cannot infer millimetres.
+  # Either set source_to_mm directly, or provide both known-distance fields.
+  source_to_mm: null
+  known_distance_source_units: null
+  known_distance_mm: null
+  confirmed: false
+
+interface:
+  # closed_mesh: input is already a watertight fragment.
+  # planar_cap: close one boundary loop with a planar cap (prototype fit only).
+  # measured_patch: stitch a measured fracture-face mesh to the exterior.
+  method: planar_cap
+  measured_patch_mesh: null
+  clearance_mm: 0.20
+  # Used only by measured_patch. Flip between 1 and -1 after visual inspection.
+  measured_patch_normal_sign: 1
+  max_planarity_rms_mm: 0.35
+
+checks:
+  require_single_component: true
+  require_watertight: true
+  require_winding_consistent: true
+  max_brep_faces: 200000
+  freecad_mesh_tolerance_mm: 0.03
+  proximity_warning_mm: 0.10
+
+print:
+  # interface_normal_to_bed puts the mating face on Z=0 and the fragment above it.
+  orientation: interface_normal_to_bed
+  material: PLA
+  nozzle_mm: 0.40
+  layer_height_mm: 0.12
+  perimeters: 4
+  infill_percent: 100
+  supports: auto
+
+output:
+  # null creates data/05_manufacturing/runs/mfg_<UTC timestamp>/.
+  run_dir: null
+

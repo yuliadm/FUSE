@@ -68,8 +68,6 @@ def measured_trace(
             "opacity": 0.72,
             "line": {"width": 0},
         },
-        selected={"marker": {"size": 6, "color": ANCHOR_RED, "opacity": 1.0}},
-        unselected={"marker": {"opacity": 0.55}},
         hovertemplate=(
             "VGGT point %{customdata[1]}<br>"
             "x=%{x:.7f}<br>y=%{y:.7f}<br>z=%{z:.7f}<extra></extra>"

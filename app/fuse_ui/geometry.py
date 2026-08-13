@@ -65,7 +65,7 @@ def _existing_path(value: str | Path | None, fuse_root: Path) -> Path | None:
 
 
 def discover_alignment_runs(data_root: Path) -> list[Path]:
-    runs_root = Path(data_root) / "03_alignment" / "runs"
+    runs_root = Path(data_root) / "kaolin_outputs" / "alignment" / "runs"
     if not runs_root.exists():
         return []
     runs = [path for path in runs_root.iterdir() if path.is_dir()]
@@ -89,8 +89,8 @@ def discover_inputs(fuse_root: Path, run_dir: Path) -> dict[str, Path | None]:
     measured = _existing_path(inputs.get("vggt_cloud"), fuse_root)
     if measured is None:
         preferred = [
-            data_root / "cleaned_geometry" / "global" / "broken_clean_normals.ply",
-            data_root / "cleaned_geometry" / "global" / "broken_clean.ply",
+            data_root / "vggt_outputs" / "global" / "broken_clean_normals.ply",
+            data_root / "vggt_outputs" / "global" / "broken_clean.ply",
             data_root / "vggt_outputs" / "global" / "cleaned_cloud.ply",
             data_root / "vggt_outputs" / "global" / "raw_vggt_cloud.ply",
         ]
@@ -439,7 +439,7 @@ def save_handoff(
     manual_points: np.ndarray,
 ) -> Path:
     timestamp = datetime.now(timezone.utc).strftime("handoff_%Y%m%dT%H%M%SZ")
-    output_dir = Path(data_root) / "04_verification" / "runs" / timestamp
+    output_dir = Path(data_root) / "kaolin_outputs"/ "verification" / "runs" / timestamp
     output_dir.mkdir(parents=True, exist_ok=False)
 
     manual_points = np.asarray(manual_points, dtype=np.float64).reshape(-1, 3)

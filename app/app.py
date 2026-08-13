@@ -43,9 +43,8 @@ st.markdown(
 )
 
 
-LABEL_OPTIONS = [
+REVIEW_OPTIONS = [
     "uncertain",
-    "missing — send to verification",
     "false positive",
 ]
 
@@ -119,11 +118,15 @@ def selected_plot_point(event) -> np.ndarray | None:
     return coordinates
 
 
-def candidate_table(components, run_key: str) -> tuple[pd.DataFrame, dict[int, str]]:
+def candidate_table(
+    components,
+    run_key: str,
+) -> tuple[pd.DataFrame, dict[int, str], list[int]]:
     rows = [
         {
-            "component_id": item.component_id,
-            "decision": "uncertain",
+            "component_id": int(item.component_id),
+            "send_to_freecad": False,
+            "review": "uncertain",
             "faces": len(item.faces),
             "area": item.area,
             "centroid_x": item.centroid[0],
@@ -132,34 +135,76 @@ def candidate_table(components, run_key: str) -> tuple[pd.DataFrame, dict[int, s
         }
         for item in components
     ]
+
     frame = pd.DataFrame(rows)
-    editor_key = f"candidate_labels_{run_key}"
+
+    # v2 avoids reusing incompatible state from the old table.
+    editor_key = f"candidate_selection_v2_{run_key}"
+
     edited = st.data_editor(
         frame,
         key=editor_key,
         width="stretch",
         hide_index=True,
-        disabled=["component_id", "faces", "area", "centroid_x", "centroid_y", "centroid_z"],
+        disabled=[
+            "component_id",
+            "faces",
+            "area",
+            "centroid_x",
+            "centroid_y",
+            "centroid_z",
+        ],
         column_config={
-            "component_id": st.column_config.NumberColumn("ID", format="%d"),
-            "decision": st.column_config.SelectboxColumn(
-                "Human decision",
-                options=LABEL_OPTIONS,
-                required=True,
-                width="large",
+            "component_id": st.column_config.NumberColumn(
+                "ID",
+                format="%d",
             ),
-            "faces": st.column_config.NumberColumn("Faces", format="%d"),
-            "area": st.column_config.NumberColumn("Area", format="%.6g"),
-            "centroid_x": st.column_config.NumberColumn("cx", format="%.5f"),
-            "centroid_y": st.column_config.NumberColumn("cy", format="%.5f"),
-            "centroid_z": st.column_config.NumberColumn("cz", format="%.5f"),
+            "send_to_freecad": st.column_config.CheckboxColumn(
+                "Include in FreeCAD hand-off",
+                help="Select all fragments that belong to the missing piece.",
+                default=False,
+            ),
+            "review": st.column_config.SelectboxColumn(
+                "Review",
+                options=REVIEW_OPTIONS,
+                required=True,
+            ),
+            "faces": st.column_config.NumberColumn(
+                "Faces",
+                format="%d",
+            ),
+            "area": st.column_config.NumberColumn(
+                "Area",
+                format="%.6g",
+            ),
+            "centroid_x": st.column_config.NumberColumn(
+                "cx",
+                format="%.5f",
+            ),
+            "centroid_y": st.column_config.NumberColumn(
+                "cy",
+                format="%.5f",
+            ),
+            "centroid_z": st.column_config.NumberColumn(
+                "cz",
+                format="%.5f",
+            ),
         },
     )
-    labels = {
-        int(row.component_id): str(row.decision)
-        for row in edited.itertuples(index=False)
-    }
-    return edited, labels
+
+    labels: dict[int, str] = {}
+    selected_ids: list[int] = []
+
+    for row in edited.itertuples(index=False):
+        component_id = int(row.component_id)
+
+        if bool(row.send_to_freecad):
+            labels[component_id] = "missing — send to verification"
+            selected_ids.append(component_id)
+        else:
+            labels[component_id] = str(row.review)
+
+    return edited, labels, selected_ids
 
 
 def resolve_path_or_stop(path: Path | None, label: str) -> Path:
@@ -191,7 +236,7 @@ with st.sidebar:
     data_root = fuse_root / "data"
     runs = discover_alignment_runs(data_root)
     if not runs:
-        st.error(f"No Stage 3 runs found under `{data_root / '03_alignment/runs'}`")
+        st.error(f"No Stage 3 runs found under `{data_root / 'kaolin_outputs/alignment/runs'}`")
         st.stop()
     run_names = [path.name for path in runs]
     selected_run_name = st.selectbox("Alignment run", run_names, index=0)
@@ -310,20 +355,19 @@ with tab_geometry:
 with tab_review:
     st.subheader("Human review of missing-fragment candidates")
     st.caption(
-        "Label each connected component. Only ‘missing — send to verification’ components move "
-        "forward; false positives remain recorded as negative labels."
+    "Use the component IDs shown in the 3D plot. Check every component "
+    "that belongs to the missing fragment. Selected components become "
+    "yellow and are merged for the FreeCAD hand-off."
     )
     if classification_mesh is None:
         st.warning("A support-classification PLY is required for candidate review.")
     elif not components:
         st.warning("No candidate components survived the current minimum-face threshold.")
     else:
-        _, labels = candidate_table(components, run_key)
-        selected_ids = [
-            component_id
-            for component_id, label in labels.items()
-            if label == "missing — send to verification"
-        ]
+        _, labels, selected_ids = candidate_table(
+            components,
+            run_key,
+)
         selected_fragment = merge_candidate_components(
             classification_mesh,
             components,

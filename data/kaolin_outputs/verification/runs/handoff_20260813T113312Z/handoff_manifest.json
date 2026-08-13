@@ -1,0 +1,32 @@
+{
+  "stage": "04_human_review_and_freecad_handoff",
+  "created_utc": "2026-08-13T11:33:12.478451+00:00",
+  "source_alignment_run": "/workspace/data/kaolin_outputs/alignment/runs/alignment_20260809T214710Z",
+  "authority_rule": "VGGT measured geometry remains unchanged.",
+  "units": "VGGT coordinate units; not assumed to be millimetres",
+  "candidate_labels": {
+    "0": "uncertain",
+    "1": "uncertain",
+    "2": "uncertain",
+    "3": "missing \u2014 send to verification",
+    "4": "uncertain",
+    "5": "uncertain"
+  },
+  "selected_component_ids": [
+    3
+  ],
+  "manual_restoration_points": 0,
+  "fragment_health": {
+    "vertices": 1650,
+    "faces": 3168,
+    "watertight": false,
+    "winding_consistent": true,
+    "euler_number": 1,
+    "area": 0.0010545251131210706
+  },
+  "manufacturing_gate": {
+    "status": "verification_required",
+    "reason": "Selected components describe an exterior hypothesis. Build a measured mating surface, apply clearance, close the solid, set physical scale, and verify fit before printing.",
+    "stl_included": false
+  }
+}

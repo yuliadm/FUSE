@@ -1,0 +1,51 @@
+name: fuse-app
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USER_ID: "${HOST_UID:-1000}"
+        GROUP_ID: "${HOST_GID:-1000}"
+
+    image: fuse-app:streamlit-1.61.1
+    container_name: fuse-app
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    init: true
+
+    ports:
+      - "127.0.0.1:${FUSE_APP_PORT:-8501}:8501"
+
+    volumes:
+      - type: bind
+        source: "${FUSE_APP_DIR:-../../app}"
+        target: /workspace/app
+        read_only: true
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: "${FUSE_DATA_DIR:-../../data}"
+        target: /workspace/data
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: "${FUSE_APP_CACHE_DIR:-./cache}"
+        target: /workspace/.cache
+        bind:
+          create_host_path: false
+
+    environment:
+      HOME: /home/fuse
+      XDG_CACHE_HOME: /workspace/.cache/xdg
+      MPLCONFIGDIR: /workspace/.cache/matplotlib
+      FUSE_ROOT: /workspace
+      PYTHONPATH: /workspace/app
+      PYTHONUNBUFFERED: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+
+    # Running from the source directory makes app/.streamlit/config.toml active.
+    working_dir: /workspace/app
+    restart: unless-stopped

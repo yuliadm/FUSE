@@ -73,7 +73,7 @@ This first editor adds points relative to measured surface anchors. Arbitrary fr
 Saved hand-offs go to:
 
 ```text
-/workspace/data/04_verification/runs/handoff_<UTC timestamp>/
+/workspace/data/kaolin_outputs/alignment/runs/handoff_<UTC timestamp>/
 ```
 
 The selected geometry is an exterior hypothesis. Before printing, Stage 4 still needs to construct the fracture mating surface, apply clearance, confirm physical scale, close the solid, and verify the fit in FreeCAD.

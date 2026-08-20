@@ -1,0 +1,114 @@
+{
+  "schema_version": "fuse.reference_hypothesis.v2",
+  "created_utc": "2026-08-16T14:03:03.984800+00:00",
+  "asset_type": "synthetic_intact_reference_hypothesis",
+  "authority": "human_selected_synthetic_prior_not_measured_evidence",
+  "model": {
+    "id": "black-forest-labs/FLUX.1-Fill-dev",
+    "pipeline": "FluxFillPipeline",
+    "transformer_parameters": "12B",
+    "transformer_quantization": "bitsandbytes NF4 4-bit double-quant",
+    "text_encoder_2_quantization": "bitsandbytes NF4 4-bit double-quant",
+    "compute_dtype": "bfloat16",
+    "offload_mode": "model"
+  },
+  "generation": {
+    "num_inference_steps": 30,
+    "guidance_scale": 30.0,
+    "max_sequence_length": 128,
+    "working_size": [
+      496,
+      640
+    ],
+    "crop_box_xyxy": [
+      813,
+      0,
+      1204,
+      494
+    ],
+    "mask_conditioned_during_generation": true
+  },
+  "prompt": "Fill only the white masked region to reconstruct the missing tail tip of\nexactly the same glossy hand-painted ceramic green dragon figurine.\nContinue the surviving green tail directly through the visible fracture\nin its current nearly vertical upward tangent. The new part must be one\ncontinuous green ceramic volume with matching starting thickness, glaze,\nhighlights, camera perspective and a gradual natural taper. Continue one\nsmall dark-navy dorsal spike along the outer edge, following the existing\nspike rhythm. End in an integrated moderately pointed green ceramic tip.\nThe junction must look physically continuous and the black background\nmust remain black. Do not attach a cap, cone, horn, pencil point, white\nobject or navy terminal cap. Do not redesign the dragon or alter any\nprotected part of the photograph.",
+  "input": {
+    "path": "/workspace/data/scenes/global/reference/pogo_incomplete.png",
+    "sha256": "5d5b4364ca2d156547ad85c8329e2206b22532796f427dd33898075dfee7cef4",
+    "size": [
+      1280,
+      720
+    ]
+  },
+  "mask": {
+    "binary_path": "/workspace/data/flux_outputs/runs/reference_fill_20260816T140151Z/restoration_mask_binary.png",
+    "model_mask_path": "/workspace/data/flux_outputs/runs/reference_fill_20260816T140151Z/model_input_mask.png",
+    "feathered_path": "/workspace/data/flux_outputs/runs/reference_fill_20260816T140151Z/restoration_mask_feathered.png",
+    "editable_fraction": 0.008618706597222222,
+    "polygon_normalized": [
+      [
+        0.764,
+        0.462
+      ],
+      [
+        0.77,
+        0.42
+      ],
+      [
+        0.772,
+        0.36
+      ],
+      [
+        0.76,
+        0.33
+      ],
+      [
+        0.776,
+        0.31
+      ],
+      [
+        0.781,
+        0.25
+      ],
+      [
+        0.79,
+        0.19
+      ],
+      [
+        0.801,
+        0.25
+      ],
+      [
+        0.807,
+        0.33
+      ],
+      [
+        0.811,
+        0.41
+      ],
+      [
+        0.815,
+        0.462
+      ]
+    ],
+    "custom_mask_path": null,
+    "outside_mask_pixels_exactly_preserved": true
+  },
+  "seeds": [
+    17
+  ],
+  "selected_seed": 17,
+  "selected_image": "/workspace/data/flux_outputs/runs/reference_fill_20260816T140151Z/selected/selected_seed_000017.png",
+  "selected_sha256": "524f8272fedff4a978213322a6dc7cb0c50489be7cc092f4c4dfe40a70d917a2",
+  "candidate_records": [
+    {
+      "seed": 17,
+      "raw_path": "/workspace/data/flux_outputs/runs/reference_fill_20260816T140151Z/raw_candidates/seed_000017_raw_full.png",
+      "constrained_path": "/workspace/data/flux_outputs/runs/reference_fill_20260816T140151Z/constrained_candidates/seed_000017_intact_hypothesis.png",
+      "elapsed_seconds": 28.876165836001746,
+      "peak_vram_gib": 6.358184337615967,
+      "outside_mask_max_abs_difference": 0,
+      "inside_mask_mean_abs_difference": 51.22716018297033
+    }
+  ],
+  "candidate_grid": "/workspace/data/flux_outputs/runs/reference_fill_20260816T140151Z/candidate_grid.png",
+  "uncertainty_proxy": "/workspace/data/flux_outputs/runs/reference_fill_20260816T140151Z/candidate_disagreement.png",
+  "previous_synthetic_used_for_generation": false
+}

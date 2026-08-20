@@ -1,0 +1,96 @@
+services:
+  reference:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USER_ID: "${HOST_UID:-1000}"
+        GROUP_ID: "${HOST_GID:-1000}"
+
+    image: fuse-reference:flux1-fill-dev-4bit-cu128
+    container_name: fuse-reference
+
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    gpus: all
+    shm_size: "8gb"
+    init: true
+
+    ports:
+      - "127.0.0.1:${FUSE_REFERENCE_PORT:-8895}:8895"
+
+    # Per-user secrets are loaded at runtime from this directory's .env file.
+    # Create it once with ./configure-env.sh. It is deliberately excluded from
+    # both Git and the Docker build context.
+    env_file:
+      - .env
+
+    volumes:
+      # This file lives at FUSE/containers/flux/compose.yaml. Create the host
+      # cache directory before startup; Docker must not create root-owned data
+      # or notebook directories.
+      - type: bind
+        source: "${FUSE_NOTEBOOKS_DIR:-../../notebooks}"
+        target: /workspace/notebooks
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: "${FUSE_DATA_DIR:-../../data}"
+        target: /workspace/data
+        bind:
+          create_host_path: false
+
+      - type: bind
+        source: "${FUSE_REFERENCE_CACHE_DIR:-./cache}"
+        target: /workspace/.cache
+        bind:
+          create_host_path: false
+
+    environment:
+      HOME: /home/fuse
+
+      HF_HOME: /workspace/.cache/huggingface
+      HF_HUB_CACHE: /workspace/.cache/huggingface/hub
+      HF_XET_CACHE: /workspace/.cache/huggingface/xet
+      HF_HUB_DISABLE_XET: "0"
+      HF_XET_HIGH_PERFORMANCE: "0"
+      HF_XET_NUM_CONCURRENT_RANGE_GETS: "4"
+      HF_HUB_DOWNLOAD_TIMEOUT: "600"
+      HF_HUB_ETAG_TIMEOUT: "60"
+
+      TORCH_HOME: /workspace/.cache/torch
+      XDG_CACHE_HOME: /workspace/.cache/xdg
+      MPLCONFIGDIR: /workspace/.cache/matplotlib
+      JUPYTER_CONFIG_DIR: /workspace/.cache/jupyter
+      IPYTHONDIR: /workspace/.cache/ipython
+      PYTHONPATH: /workspace
+      PYTHONUNBUFFERED: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTORCH_CUDA_ALLOC_CONF: "expandable_segments:True"
+      BITSANDBYTES_NOWELCOME: "1"
+      NVIDIA_VISIBLE_DEVICES: "0"
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+
+    working_dir: /workspace
+
+    command:
+      - /bin/bash
+      - -lc
+      - |
+        if [[ -z "$${HF_TOKEN:-}" ]]; then
+          echo >&2 "ERROR: HF_TOKEN is empty."
+          echo >&2 "Accept access to black-forest-labs/FLUX.1-Fill-dev,"
+          echo >&2 "then run ./configure-env.sh in FUSE/containers/flux."
+          exit 64
+        fi
+        exec python -m jupyterlab \
+          --ip=0.0.0.0 \
+          --port=8895 \
+          --no-browser \
+          --ServerApp.root_dir=/workspace \
+          --IdentityProvider.token= \
+          --ServerApp.password= \
+          --LabApp.extension_manager=readonly
+
+    restart: unless-stopped
+

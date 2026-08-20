@@ -6,6 +6,7 @@ import os
 
 import numpy as np
 import pandas as pd
+import plotly.graph_objects as go
 import streamlit as st
 
 from fuse_ui.geometry import (
@@ -18,6 +19,7 @@ from fuse_ui.geometry import (
     manual_points_csv_bytes,
     merge_candidate_components,
     point_cloud_ply_bytes,
+    save_fragment_edit,
     save_handoff,
 )
 from fuse_ui.plotting import candidate_figure, overlay_figure
@@ -83,6 +85,35 @@ def path_input(label: str, value: Path | None, key: str) -> Path | None:
     return Path(raw)
 
 
+def discover_fragment_edit_runs(data_root: Path, source_run: Path) -> list[Path]:
+    runs_root = Path(data_root) / "kaolin_outputs" / "fragment_edits" / "runs"
+    if not runs_root.exists():
+        return []
+    matches: list[Path] = []
+    for candidate in runs_root.iterdir():
+        manifest_path = candidate / "fragment_edit_manifest.json"
+        if not candidate.is_dir() or not manifest_path.exists():
+            continue
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            continue
+        if (
+            manifest.get("schema") == "fuse.fragment-edit/v1"
+            and manifest.get("source_alignment_run") == str(source_run)
+        ):
+            matches.append(candidate)
+    return sorted(matches, key=lambda path: path.stat().st_mtime, reverse=True)
+
+
+def load_fragment_edit_manifest(edit_dir: Path) -> dict:
+    manifest_path = Path(edit_dir) / "fragment_edit_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if manifest.get("schema") != "fuse.fragment-edit/v1":
+        raise ValueError(f"Unsupported fragment-edit schema in {manifest_path}")
+    return manifest
+
+
 def manual_points_array() -> np.ndarray:
     points = st.session_state.get("manual_points", [])
     if not points:
@@ -90,32 +121,208 @@ def manual_points_array() -> np.ndarray:
     return np.asarray(points, dtype=np.float64).reshape(-1, 3)
 
 
-def set_manual_points(points: np.ndarray) -> None:
+def set_manual_points(points: np.ndarray, *, refresh_editor: bool = True) -> None:
     st.session_state.manual_points = np.asarray(points, dtype=np.float64).reshape(-1, 3).tolist()
+    if refresh_editor:
+        st.session_state.manual_points_revision = (
+            int(st.session_state.get("manual_points_revision", 0)) + 1
+        )
 
 
-def selected_plot_point(event) -> np.ndarray | None:
+def add_manual_point_callback() -> None:
+    anchor = st.session_state.get("editor_anchor")
+    if anchor is None:
+        return
+    anchor_array = np.asarray(anchor, dtype=np.float64).reshape(3)
+    offset = np.asarray(
+        [
+            st.session_state.get("offset_x", 0.0),
+            st.session_state.get("offset_y", 0.0),
+            st.session_state.get("offset_z", 0.0),
+        ],
+        dtype=np.float64,
+    )
+    point = anchor_array + offset
+    set_manual_points(np.vstack([manual_points_array(), point]))
+    st.session_state.editor_anchor = point.tolist()
+    st.session_state.offset_x = 0.0
+    st.session_state.offset_y = 0.0
+    st.session_state.offset_z = 0.0
+
+
+def use_last_manual_point_callback() -> None:
+    points = manual_points_array()
+    if len(points):
+        st.session_state.editor_anchor = points[-1].tolist()
+
+
+def undo_manual_point_callback() -> None:
+    points = manual_points_array()
+    if len(points):
+        set_manual_points(points[:-1])
+
+
+def clear_manual_points_callback() -> None:
+    set_manual_points(np.empty((0, 3), dtype=np.float64))
+    st.session_state.editor_anchor = None
+    st.session_state.last_plot_selection = None
+    st.session_state.anchor_selector_revision = (
+        int(st.session_state.get("anchor_selector_revision", 0)) + 1
+    )
+
+
+def reset_anchor_picker_callback() -> None:
+    st.session_state.editor_anchor = None
+    st.session_state.last_plot_selection = None
+    st.session_state.anchor_selector_revision = (
+        int(st.session_state.get("anchor_selector_revision", 0)) + 1
+    )
+
+
+def selected_projection_point(event) -> bool:
     try:
         points = event.selection.points
     except (AttributeError, KeyError, TypeError):
-        return None
+        return False
     if not points:
-        return None
+        return False
     point = points[-1]
     try:
-        coordinates = np.asarray([point["x"], point["y"], point["z"]], dtype=np.float64)
-    except (KeyError, TypeError, ValueError):
-        return None
+        customdata = point["customdata"]
+        coordinates = np.asarray(customdata[:3], dtype=np.float64)
+    except (KeyError, TypeError, ValueError, IndexError):
+        return False
     if not np.isfinite(coordinates).all():
-        return None
+        return False
     signature = tuple(np.round(coordinates, 12))
-    if signature != st.session_state.get("last_plot_selection"):
+    if (
+        signature != st.session_state.get("last_plot_selection")
+        or st.session_state.get("editor_anchor") is None
+    ):
         st.session_state.last_plot_selection = signature
         st.session_state.editor_anchor = coordinates.tolist()
         st.session_state.offset_x = 0.0
         st.session_state.offset_y = 0.0
         st.session_state.offset_z = 0.0
-    return coordinates
+        return True
+    return False
+
+
+def projection_selector_figure(
+    measured,
+    manual_points: np.ndarray,
+    anchor: np.ndarray | None,
+    projection: str,
+    rotate_180: bool = True,
+    maximum_measured: int = 70_000,
+) -> go.Figure:
+    axes = {
+        "XY — view along Z": (0, 1, "x", "y"),
+        "XZ — view along Y": (0, 2, "x", "z"),
+        "YZ — view along X": (1, 2, "y", "z"),
+    }
+    horizontal, vertical, horizontal_name, vertical_name = axes[projection]
+
+    count = len(measured.points)
+    if count <= maximum_measured:
+        indices = np.arange(count, dtype=np.int64)
+    else:
+        indices = np.sort(
+            np.random.default_rng(17).choice(count, maximum_measured, replace=False)
+        )
+    measured_points = np.asarray(measured.points, dtype=np.float64)[indices]
+    measured_customdata = np.column_stack(
+        [
+            measured_points,
+            np.full(len(measured_points), "VGGT", dtype=object),
+            indices.astype(object),
+        ]
+    )
+
+    figure = go.Figure()
+    figure.add_trace(
+        go.Scattergl(
+            x=measured_points[:, horizontal],
+            y=measured_points[:, vertical],
+            mode="markers",
+            name="VGGT measured",
+            customdata=measured_customdata,
+            marker={"size": 4, "color": "rgb(125,131,137)", "opacity": 0.58},
+            hovertemplate=(
+                "VGGT point %{customdata[4]}<br>"
+                "x=%{customdata[0]:.7f}<br>"
+                "y=%{customdata[1]:.7f}<br>"
+                "z=%{customdata[2]:.7f}<extra></extra>"
+            ),
+        )
+    )
+
+    if len(manual_points):
+        points = np.asarray(manual_points, dtype=np.float64).reshape(-1, 3)
+        manual_customdata = np.column_stack(
+            [
+                points,
+                np.full(len(points), "MANUAL", dtype=object),
+                np.arange(len(points), dtype=object),
+            ]
+        )
+        figure.add_trace(
+            go.Scattergl(
+                x=points[:, horizontal],
+                y=points[:, vertical],
+                mode="markers+lines",
+                name="manual restoration points",
+                customdata=manual_customdata,
+                marker={"size": 9, "color": "rgb(255,77,157)", "symbol": "diamond"},
+                line={"width": 2, "color": "rgb(255,77,157)"},
+                hovertemplate=(
+                    "manual point %{customdata[4]}<br>"
+                    "x=%{customdata[0]:.7f}<br>"
+                    "y=%{customdata[1]:.7f}<br>"
+                    "z=%{customdata[2]:.7f}<extra></extra>"
+                ),
+            )
+        )
+
+    if anchor is not None:
+        point = np.asarray(anchor, dtype=np.float64).reshape(3)
+        figure.add_trace(
+            go.Scattergl(
+                x=[point[horizontal]],
+                y=[point[vertical]],
+                mode="markers",
+                name="current anchor",
+                customdata=[[point[0], point[1], point[2], "ANCHOR", 0]],
+                marker={"size": 13, "color": "rgb(235,76,74)", "symbol": "x"},
+                hovertemplate=(
+                    "anchor<br>x=%{customdata[0]:.7f}<br>"
+                    "y=%{customdata[1]:.7f}<br>"
+                    "z=%{customdata[2]:.7f}<extra></extra>"
+                ),
+            )
+        )
+
+    figure.update_layout(
+        title={"text": f"{projection} — click a point to set the anchor", "x": 0.02},
+        height=460,
+        margin={"l": 20, "r": 20, "b": 20, "t": 55},
+        clickmode="event+select",
+        dragmode="zoom",
+        hovermode="closest",
+        uirevision=f"fuse-anchor-projection-{projection}-{rotate_180}",
+        xaxis={
+            "title": horizontal_name,
+            "scaleanchor": "y",
+            "scaleratio": 1,
+            "autorange": "reversed" if rotate_180 else True,
+        },
+        yaxis={
+            "title": vertical_name,
+            "autorange": "reversed" if rotate_180 else True,
+        },
+        legend={"orientation": "h", "x": 0.0, "y": 1.08},
+    )
+    return figure
 
 
 def candidate_table(
@@ -219,6 +426,10 @@ def resolve_path_or_stop(path: Path | None, label: str) -> Path:
 
 if "manual_points" not in st.session_state:
     st.session_state.manual_points = []
+if "manual_points_revision" not in st.session_state:
+    st.session_state.manual_points_revision = 0
+if "anchor_selector_revision" not in st.session_state:
+    st.session_state.anchor_selector_revision = 0
 if "editor_anchor" not in st.session_state:
     st.session_state.editor_anchor = None
 
@@ -407,8 +618,8 @@ with tab_review:
 with tab_manual:
     st.subheader("Manual restoration-point editor")
     st.caption(
-        "Click a displayed VGGT or manual point to use it as the anchor, then enter a local "
-        "offset and add the next point. Direct coordinate entry remains available below."
+        "Rotate and inspect the object in the 3D view. Use the orthographic selector below "
+        "to click a VGGT or manual point, then enter a local offset and add the next point."
     )
     manual_points = manual_points_array()
     anchor = st.session_state.get("editor_anchor")
@@ -419,20 +630,70 @@ with tab_manual:
         missing=selected_fragment if st.toggle("Show selected fragment", value=True) else None,
         manual_points=manual_points,
         anchor=anchor_array,
-        title="Manual repair editor — click a point to set the red anchor",
+        title="Manual repair editor — drag to orbit, scroll to zoom",
         maximum_measured=min(plot_max, 70_000),
         selectable=True,
     )
-    event = st.plotly_chart(
+    editor_figure.update_scenes(
+        dragmode="orbit",
+        hovermode="closest",
+        uirevision=f"manual-editor-camera-{run_key}",
+    )
+    st.plotly_chart(
         editor_figure,
         key=f"manual_editor_plot_{run_key}",
+        width="stretch",
+        theme=None,
+        config={"scrollZoom": True, "displaylogo": False},
+    )
+
+    st.markdown("#### Choose an anchor")
+    projection_col, orientation_col, reset_col = st.columns([3, 2, 1])
+    with projection_col:
+        projection = st.segmented_control(
+            "Orthographic projection",
+            options=["XY — view along Z", "XZ — view along Y", "YZ — view along X"],
+            default="XY — view along Z",
+            key=f"manual_anchor_projection_{run_key}",
+        )
+    with orientation_col:
+        rotate_projection = st.toggle(
+            "Turn projection upright (180°)",
+            value=True,
+            key=f"manual_anchor_rotate_{run_key}",
+        )
+    with reset_col:
+        st.button(
+            "Reset picker",
+            width="stretch",
+            key=f"reset_anchor_picker_{run_key}",
+            on_click=reset_anchor_picker_callback,
+        )
+    if projection is None:
+        projection = "XY — view along Z"
+    selector_figure = projection_selector_figure(
+        measured,
+        manual_points,
+        anchor_array,
+        projection,
+        rotate_180=rotate_projection,
+        maximum_measured=min(plot_max, 70_000),
+    )
+    selector_revision = st.session_state.anchor_selector_revision
+    selector_event = st.plotly_chart(
+        selector_figure,
+        key=(
+            f"manual_anchor_selector_{projection}_{rotate_projection}_"
+            f"{selector_revision}_{run_key}"
+        ),
         on_select="rerun",
         selection_mode="points",
         width="stretch",
         theme=None,
         config={"scrollZoom": True, "displaylogo": False},
     )
-    selected_plot_point(event)
+    if selected_projection_point(selector_event):
+        st.rerun()
     anchor = st.session_state.get("editor_anchor")
     anchor_array = None if anchor is None else np.asarray(anchor, dtype=np.float64)
 
@@ -446,27 +707,36 @@ with tab_manual:
         )
         dx_col, dy_col, dz_col = st.columns(3)
         with dx_col:
-            dx = st.number_input("Δx", value=0.0, step=step, format="%.8f", key="offset_x")
+            st.number_input("Δx", value=0.0, step=step, format="%.8f", key="offset_x")
         with dy_col:
-            dy = st.number_input("Δy", value=0.0, step=step, format="%.8f", key="offset_y")
+            st.number_input("Δy", value=0.0, step=step, format="%.8f", key="offset_y")
         with dz_col:
-            dz = st.number_input("Δz", value=0.0, step=step, format="%.8f", key="offset_z")
-        add_col, last_col, undo_col = st.columns(3)
-        if add_col.button("Add point at anchor + offset", type="primary", width="stretch"):
-            point = anchor_array + np.asarray([dx, dy, dz], dtype=np.float64)
-            points = np.vstack([manual_points_array(), point])
-            set_manual_points(points)
-            st.session_state.editor_anchor = point.tolist()
-            st.session_state.offset_x = 0.0
-            st.session_state.offset_y = 0.0
-            st.session_state.offset_z = 0.0
-            st.rerun()
-        if last_col.button("Use last manual point as anchor", width="stretch", disabled=not len(manual_points)):
-            st.session_state.editor_anchor = manual_points[-1].tolist()
-            st.rerun()
-        if undo_col.button("Undo last point", width="stretch", disabled=not len(manual_points)):
-            set_manual_points(manual_points[:-1])
-            st.rerun()
+            st.number_input("Δz", value=0.0, step=step, format="%.8f", key="offset_z")
+        add_col, last_col, undo_col, clear_col = st.columns(4)
+        add_col.button(
+            "Add point at anchor + offset",
+            type="primary",
+            width="stretch",
+            on_click=add_manual_point_callback,
+        )
+        last_col.button(
+            "Use last manual point as anchor",
+            width="stretch",
+            disabled=not len(manual_points),
+            on_click=use_last_manual_point_callback,
+        )
+        undo_col.button(
+            "Undo last point",
+            width="stretch",
+            disabled=not len(manual_points),
+            on_click=undo_manual_point_callback,
+        )
+        clear_col.button(
+            "Clear manual points",
+            width="stretch",
+            disabled=not len(manual_points),
+            on_click=clear_manual_points_callback,
+        )
 
     with st.expander("Absolute coordinates and table editor", expanded=anchor_array is None):
         base = np.zeros(3) if anchor_array is None else anchor_array
@@ -482,7 +752,10 @@ with tab_manual:
         manual_frame = pd.DataFrame(manual_points_array(), columns=["x", "y", "z"])
         edited_manual = st.data_editor(
             manual_frame,
-            key=f"manual_point_table_{run_key}",
+            key=(
+                f"manual_point_table_{run_key}_"
+                f"{st.session_state.manual_points_revision}"
+            ),
             num_rows="dynamic",
             hide_index=False,
             width="stretch",
@@ -497,9 +770,10 @@ with tab_manual:
         if cleaned.shape != current.shape or (
             cleaned.size and not np.allclose(cleaned, current, rtol=0.0, atol=1e-12)
         ):
-            set_manual_points(cleaned)
+            set_manual_points(cleaned, refresh_editor=False)
 
     manual_points = manual_points_array()
+    st.metric("Manual points", f"{len(manual_points):,}")
     if len(manual_points):
         csv_bytes = manual_points_csv_bytes(manual_points)
         ply_bytes = point_cloud_ply_bytes(
@@ -508,14 +782,14 @@ with tab_manual:
         )
         dl_csv, dl_ply = st.columns(2)
         dl_csv.download_button(
-            "Download manual points · CSV",
+            "Export manual points to browser · CSV",
             csv_bytes,
             "manual_restoration_points.csv",
             "text/csv",
             width="stretch",
         )
         dl_ply.download_button(
-            "Download manual points · PLY",
+            "Export manual points to browser · PLY",
             ply_bytes,
             "manual_restoration_points.ply",
             "application/octet-stream",
@@ -537,71 +811,213 @@ with tab_manual:
                 ]
             )
             st.download_button(
-                "Download combined cloud · PLY",
+                "Export combined cloud to browser · PLY",
                 point_cloud_ply_bytes(combined_points, combined_colors),
                 "vggt_plus_manual_restoration_points.ply",
                 "application/octet-stream",
                 width="stretch",
             )
 
-with tab_handoff:
-    st.subheader("FreeCAD and verification hand-off")
-    manual_points = manual_points_array()
-    selected_ids = sorted(
-        component_id
-        for component_id, label in labels.items()
-        if label == "missing — send to verification"
+    st.divider()
+    st.markdown("#### Save Stage 3 fragment draft")
+    st.caption(
+        "Persist the selected-fragment vertices and manual points as separate, provenance-aware "
+        "artifacts before continuing to verification."
     )
     if selected_fragment is None and not len(manual_points):
-        st.info("Select at least one missing component or add manual restoration points first.")
+        st.info("Select a missing component or add at least one manual point before saving a draft.")
     else:
-        st.markdown(
-            "**This is a verification hand-off, not a print command.** The selected mesh is an "
-            "exterior hypothesis. The next stage must construct the mating surface from the "
-            "fracture, add clearance, confirm physical scale, close the solid, and verify fit."
-        )
-        if selected_fragment is not None:
-            health_a, health_b, health_c = st.columns(3)
-            health_a.metric("Components", ", ".join(map(str, selected_ids)) or "existing export")
-            health_b.metric("Faces", f"{len(selected_fragment.faces):,}")
-            health_c.metric("STL gate", "open" if selected_fragment.is_watertight else "blocked")
-            if not selected_fragment.is_watertight:
-                st.warning(
-                    "The selected exterior is open, so STL is intentionally withheld. OBJ, PLY, "
-                    "and GLB remain available for FreeCAD inspection and completion."
-                )
-
-        confirmation = st.checkbox(
-            "I confirm that the yellow components are genuinely absent—not merely unobserved or mismatched.",
-            value=False,
-        )
-        if confirmation:
-            zip_bytes = build_handoff_zip(
+        if st.button(
+            "Save draft for Tab 4",
+            type="primary",
+            width="stretch",
+            key=f"save_fragment_edit_{run_key}",
+        ):
+            output_dir = save_fragment_edit(
+                data_root,
                 run_dir,
                 labels,
                 selected_fragment,
                 manual_points,
             )
-            download_col, save_col = st.columns(2)
-            download_col.download_button(
-                "Download verification bundle",
+            st.session_state.last_fragment_edit_dir = str(output_dir)
+        last_fragment_edit = st.session_state.get("last_fragment_edit_dir")
+        if last_fragment_edit:
+            st.success(
+                f"Stage 3 draft saved for Tab 4: `{last_fragment_edit}`. "
+                "Open Tab 4 to verify the persisted hand-off."
+            )
+
+with tab_handoff:
+    st.subheader("Stage 3 → Stage 4 verification hand-off")
+    fragment_edit_runs = discover_fragment_edit_runs(data_root, run_dir)
+    last_fragment_edit = st.session_state.get("last_fragment_edit_dir")
+    if last_fragment_edit:
+        last_path = Path(last_fragment_edit)
+        if last_path.exists() and last_path not in fragment_edit_runs:
+            try:
+                last_manifest = load_fragment_edit_manifest(last_path)
+            except (ValueError, json.JSONDecodeError, OSError):
+                last_manifest = None
+            if last_manifest and last_manifest.get("source_alignment_run") == str(run_dir):
+                fragment_edit_runs.insert(0, last_path)
+
+    if not fragment_edit_runs:
+        st.info(
+            "No persisted Stage 3 fragment draft is available for this alignment run. "
+            "Return to Tab 3 and press **Save draft for Tab 4**. Browser export buttons do not "
+            "advance the pipeline."
+        )
+    else:
+        edit_names = [path.name for path in fragment_edit_runs]
+        selected_edit_name = st.selectbox(
+            "Persisted Stage 3 draft",
+            edit_names,
+            index=0,
+            key=f"fragment_edit_handoff_{run_key}",
+        )
+        edit_dir = fragment_edit_runs[edit_names.index(selected_edit_name)]
+        edit_manifest = load_fragment_edit_manifest(edit_dir)
+        edit_mode = str(edit_manifest.get("mode", "unknown"))
+        draft_selected_ids = [
+            int(value) for value in edit_manifest.get("selected_component_ids", [])
+        ]
+        draft_labels = {item.component_id: "uncertain" for item in components}
+        for component_id in draft_selected_ids:
+            draft_labels[component_id] = "missing — send to verification"
+
+        draft_selected_fragment = None
+        if draft_selected_ids and classification_mesh is not None:
+            draft_selected_fragment = merge_candidate_components(
+                classification_mesh,
+                components,
+                draft_selected_ids,
+            )
+        elif int(edit_manifest.get("base_fragment", {}).get("point_count", 0)) > 0:
+            draft_selected_fragment = existing_missing
+        if (
+            int(edit_manifest.get("base_fragment", {}).get("point_count", 0)) > 0
+            and draft_selected_fragment is None
+        ):
+            st.error(
+                "The persisted draft references an inferred/base fragment that cannot be "
+                "resolved from the current alignment run. Restore the original candidate "
+                "artifacts or save a new Stage 3 draft."
+            )
+            st.stop()
+
+        manual_artifact = edit_manifest.get("artifacts", {}).get("manual_points")
+        draft_manual_points = np.empty((0, 3), dtype=np.float64)
+        if manual_artifact:
+            manual_path = edit_dir / str(manual_artifact["path"])
+            if manual_path.exists():
+                draft_manual_points = load_cached_cloud(manual_path).points
+
+        working_artifact = edit_manifest.get("artifacts", {}).get("working_fragment_points", {})
+        working_path = edit_dir / str(working_artifact.get("path", ""))
+        expected_working_point_count = int(
+            edit_manifest.get("working_fragment", {}).get("point_count", 0)
+        )
+        base_point_count = int(edit_manifest.get("base_fragment", {}).get("point_count", 0))
+
+        if not working_path.is_file():
+            st.error(f"The persisted working fragment is missing: `{working_path}`")
+            st.stop()
+        draft_working_points = load_cached_cloud(working_path).points
+        working_point_count = int(len(draft_working_points))
+        if working_point_count != expected_working_point_count:
+            st.error(
+                "The persisted working-fragment point count does not match its manifest: "
+                f"file={working_point_count:,}, manifest={expected_working_point_count:,}."
+            )
+            st.stop()
+
+        st.success(f"Loaded persisted Stage 3 draft: `{edit_dir}`")
+        mode_col, base_col, manual_col, working_col = st.columns(4)
+        mode_col.metric("Hand-off mode", edit_mode.replace("_", " "))
+        base_col.metric("Inferred/base points", f"{base_point_count:,}")
+        manual_col.metric("Human-authored points", f"{len(draft_manual_points):,}")
+        working_col.metric("Working points", f"{working_point_count:,}")
+
+        st.plotly_chart(
+            overlay_figure(
+                measured,
+                missing=draft_selected_fragment,
+                manual_points=draft_manual_points,
+                title="Persisted hand-off — yellow inferred, magenta human-authored",
+                maximum_measured=min(plot_max, 70_000),
+            ),
+            key=f"persisted_handoff_preview_{selected_edit_name}_{run_key}",
+            width="stretch",
+            theme=None,
+            config={"scrollZoom": True, "displaylogo": False},
+        )
+
+        st.markdown(
+            "**This is a verification hand-off, not a print command.** The magenta point cloud "
+            "is a valid human-authored Stage 3 hypothesis, but it is not yet a printable surface. "
+            "Stage 4 must construct or refine the surface, build the mating interface, add "
+            "clearance, confirm scale, close the solid, and verify fit."
+        )
+        if draft_selected_fragment is not None and not draft_selected_fragment.is_watertight:
+            st.warning(
+                "The yellow exterior is open, so STL is intentionally withheld. OBJ, PLY, and "
+                "GLB remain available for verification and completion."
+            )
+
+        confirmation_labels = {
+            "manual_only": (
+                "I confirm that the magenta manual point cloud is the intended missing-fragment "
+                "hypothesis for Stage 4 verification."
+            ),
+            "selected_only": (
+                "I confirm that the yellow selected components are genuinely absent—not merely "
+                "unobserved or mismatched."
+            ),
+            "selected_plus_manual": (
+                "I confirm that the yellow selected components and magenta manual point cloud "
+                "together form the intended missing-fragment hypothesis for Stage 4 verification."
+            ),
+        }
+        confirmation = st.checkbox(
+            confirmation_labels.get(
+                edit_mode,
+                "I confirm this persisted Stage 3 draft for Stage 4 verification.",
+            ),
+            value=False,
+            key=f"confirm_fragment_edit_{selected_edit_name}",
+        )
+        if confirmation:
+            zip_bytes = build_handoff_zip(
+                run_dir,
+                draft_labels,
+                draft_selected_fragment,
+                draft_manual_points,
+            )
+            export_col, save_col = st.columns(2)
+            export_col.download_button(
+                "Export verification ZIP to browser",
                 zip_bytes,
                 f"fuse_{run_dir.name}_freecad_handoff.zip",
                 "application/zip",
-                type="primary",
                 width="stretch",
             )
-            if save_col.button("Save as Stage 4 run", width="stretch"):
+            if save_col.button(
+                "Commit persistent Stage 4 run",
+                type="primary",
+                width="stretch",
+                key=f"save_stage_4_{selected_edit_name}",
+            ):
                 output_dir = save_handoff(
                     data_root,
                     run_dir,
-                    labels,
-                    selected_fragment,
-                    manual_points,
+                    draft_labels,
+                    draft_selected_fragment,
+                    draft_manual_points,
                 )
-                st.success(f"Saved: `{output_dir}`")
+                st.success(f"Persistent Stage 4 run saved: `{output_dir}`")
         else:
-            st.caption("Confirmation is required before the hand-off bundle is enabled.")
+            st.caption("Confirmation is required before Stage 4 export or commit is enabled.")
 
 with st.sidebar:
     st.divider()

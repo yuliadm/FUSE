@@ -329,6 +329,106 @@ def manual_points_csv_bytes(points: np.ndarray) -> bytes:
     return output.getvalue()
 
 
+def save_fragment_edit(
+    data_root: Path,
+    run_dir: Path,
+    labels: dict[int, str],
+    selected_mesh: trimesh.Trimesh | None,
+    manual_points: np.ndarray,
+) -> Path:
+    manual_points = np.asarray(manual_points, dtype=np.float64).reshape(-1, 3)
+    base_points = (
+        np.empty((0, 3), dtype=np.float64)
+        if selected_mesh is None
+        else np.asarray(selected_mesh.vertices, dtype=np.float64).reshape(-1, 3)
+    )
+    if not len(base_points) and not len(manual_points):
+        raise ValueError("A fragment edit needs selected or manually authored points")
+
+    selected_ids = sorted(
+        int(component_id)
+        for component_id, label in labels.items()
+        if label == "missing — send to verification"
+    )
+    if len(base_points) and len(manual_points):
+        mode = "selected_plus_manual"
+    elif len(manual_points):
+        mode = "manual_only"
+    else:
+        mode = "selected_only"
+
+    timestamp = datetime.now(timezone.utc).strftime("fragment_edit_%Y%m%dT%H%M%S%fZ")
+    output_dir = Path(data_root) / "kaolin_outputs" / "fragment_edits" / "runs" / timestamp
+    output_dir.mkdir(parents=True, exist_ok=False)
+
+    artifacts: dict[str, Any] = {}
+    if len(manual_points):
+        manual_bytes = point_cloud_ply_bytes(
+            manual_points,
+            np.tile(np.asarray([[255, 77, 157]], dtype=np.uint8), (len(manual_points), 1)),
+        )
+        manual_name = "manual_fragment_points.ply"
+        (output_dir / manual_name).write_bytes(manual_bytes)
+        artifacts["manual_points"] = {
+            "path": manual_name,
+            "sha256": hashlib.sha256(manual_bytes).hexdigest(),
+            "point_count": int(len(manual_points)),
+        }
+
+    edited_points = np.vstack([base_points, manual_points])
+    edited_colors = np.vstack(
+        [
+            np.tile(np.asarray([[255, 215, 40]], dtype=np.uint8), (len(base_points), 1)),
+            np.tile(np.asarray([[255, 77, 157]], dtype=np.uint8), (len(manual_points), 1)),
+        ]
+    )
+    edited_bytes = point_cloud_ply_bytes(edited_points, edited_colors)
+    edited_name = "edited_fragment_points.ply"
+    (output_dir / edited_name).write_bytes(edited_bytes)
+    artifacts["working_fragment_points"] = {
+        "path": edited_name,
+        "sha256": hashlib.sha256(edited_bytes).hexdigest(),
+        "point_count": int(len(edited_points)),
+    }
+
+    manifest = {
+        "schema": "fuse.fragment-edit/v1",
+        "stage": "03_fragment_edit",
+        "created_utc": datetime.now(timezone.utc).isoformat(),
+        "source_alignment_run": str(run_dir),
+        "authority_rule": "VGGT measured geometry remains unchanged.",
+        "units": "VGGT coordinate units; not assumed to be millimetres",
+        "mode": mode,
+        "selected_component_ids": selected_ids,
+        "base_fragment": {
+            "source": (
+                "human_selected_kaolin_components"
+                if selected_ids
+                else "existing_missing_piece_export"
+                if len(base_points)
+                else None
+            ),
+            "point_count": int(len(base_points)),
+            "provenance": "inferred",
+        },
+        "manual_fragment": {
+            "point_count": int(len(manual_points)),
+            "provenance": "human_authored",
+        },
+        "working_fragment": {
+            "point_count": int(len(edited_points)),
+            "status": "valid_stage_3_handoff",
+            "surface_status": "not_constructed" if selected_mesh is None else "candidate_mesh_available",
+        },
+        "artifacts": artifacts,
+    }
+    (output_dir / "fragment_edit_manifest.json").write_text(
+        json.dumps(manifest, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return output_dir
+
+
 def file_sha256(path: Path, block_size: int = 1 << 20) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:

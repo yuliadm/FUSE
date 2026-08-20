@@ -15,9 +15,9 @@ The app auto-discovers:
 
 ```text
 /workspace/data/cleaned_geometry/global/broken_clean_normals.ply
-/workspace/data/03_alignment/runs/<run>/prior_adapted.glb
-/workspace/data/03_alignment/runs/<run>/prior_support_classification.ply
-/workspace/data/03_alignment/runs/<run>/alignment_report.json
+/workspace/data/kaolin_outputs/alignment/runs/<run>/prior_adapted.glb
+/workspace/data/kaolin_outputs/alignment/runs/<run>/prior_support_classification.ply
+/workspace/data/kaolin_outputs/alignment/runs/<run>/alignment_report.json
 ```
 
 Paths can also be overridden in the sidebar.

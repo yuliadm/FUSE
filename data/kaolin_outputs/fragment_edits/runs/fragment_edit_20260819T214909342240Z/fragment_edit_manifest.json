@@ -1,0 +1,36 @@
+{
+  "schema": "fuse.fragment-edit/v1",
+  "stage": "03_fragment_edit",
+  "created_utc": "2026-08-19T21:49:09.342792+00:00",
+  "source_alignment_run": "/workspace/data/kaolin_outputs/alignment/runs/alignment_20260809T214710Z",
+  "authority_rule": "VGGT measured geometry remains unchanged.",
+  "units": "VGGT coordinate units; not assumed to be millimetres",
+  "mode": "manual_only",
+  "selected_component_ids": [],
+  "base_fragment": {
+    "source": null,
+    "point_count": 0,
+    "provenance": "inferred"
+  },
+  "manual_fragment": {
+    "point_count": 2,
+    "provenance": "human_authored"
+  },
+  "working_fragment": {
+    "point_count": 2,
+    "status": "valid_stage_3_handoff",
+    "surface_status": "not_constructed"
+  },
+  "artifacts": {
+    "manual_points": {
+      "path": "manual_fragment_points.ply",
+      "sha256": "1123fdef94eb632aa5c5330988cf6cfad2b0fa8975b146bc6d1428744dc48fa3",
+      "point_count": 2
+    },
+    "working_fragment_points": {
+      "path": "edited_fragment_points.ply",
+      "sha256": "1123fdef94eb632aa5c5330988cf6cfad2b0fa8975b146bc6d1428744dc48fa3",
+      "point_count": 2
+    }
+  }
+}

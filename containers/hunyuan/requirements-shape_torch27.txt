@@ -1,0 +1,31 @@
+# Hunyuan3D-2.1 inference-only shape runtime.
+# PyTorch/torchvision/torchaudio come from the pinned Docker base image.
+# Paint, Blender, Gradio, training and custom rasterizer packages are omitted.
+#
+# The PyTorch 2.5.1 base image contains ninja 1.11.1.1. Its wheel metadata is
+# rejected by pip >=24.2 on Linux ("not supported on this platform"). Version
+# 1.11.1.4 carries corrected platform metadata, so pin it before `pip check`.
+ninja
+
+transformers==4.46.0
+diffusers==0.30.0
+accelerate==1.1.1
+huggingface-hub==0.30.2
+safetensors==0.4.4
+einops==0.8.0
+omegaconf==2.3.0
+pyyaml==6.0.2
+tqdm==4.66.5
+psutil==6.0.0
+
+numpy==1.26.4
+scipy==1.14.1
+scikit-image==0.24.0
+pillow==10.4.0
+opencv-python-headless==4.10.0.84
+rembg==2.0.65
+onnxruntime==1.16.3
+
+trimesh==4.4.7
+pymeshlab==2023.12.post3
+timm==1.0.22
